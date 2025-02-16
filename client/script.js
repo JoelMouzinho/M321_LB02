@@ -38,11 +38,28 @@ socket.addEventListener("error", (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("btnSendHello").addEventListener("click", () => {
-    const message = {
-      type: "message",
-      text: "Hello, server!",
-    };
-    socket.send(JSON.stringify(message));
+  const sendButton = document.getElementById("btnSendHello");
+  const messageInput = document.querySelector("input[type='text']");
+
+  sendButton.addEventListener("click", () => {
+    const messageText = messageInput.value.trim();
+
+    if(messageText !== "") {
+      const message = {
+        type: "message",
+        text: messageText,
+      };
+
+      socket.send(JSON.stringify(message));
+      createMessage(`You: ${messageText}`);
+      messageInput.value = "";
+    }
   });
+
+  messageInput.addEventListener("keypress", (event) => {
+    if (event.key === "Enter") {
+      sendButton.click();
+    }
+  })
+
 });
