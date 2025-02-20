@@ -29,6 +29,7 @@ if (env !== "production") {
   app.use(connectLiveReload());
 }
 
+app.use(express.json());
 // deliver static files from the client folder like css, js, images
 app.use(express.static("client"));
 // route for the homepage
