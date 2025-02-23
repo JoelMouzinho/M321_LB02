@@ -101,6 +101,17 @@ const deleteMessageFromDB = async (messageId) => {
   }
 };
 
+const updateUsernameInDB = async (userId, newUsername) => {
+  try {
+    // Update-Abfrage zum Ändern des Benutzernamens in der Datenbank
+    const updateQuery = "UPDATE users SET username = ? WHERE id = ?";
+    await executeSQL(updateQuery, [newUsername, userId]);
+    console.log("Username updated in DB:", userId);
+  } catch (err) {
+    console.error("Error updating username in DB:", err);
+  }
+};
+
 // If a new message is received, the onMessage function is called
 /**
  * Handles a new message from a websocket connection.
@@ -167,6 +178,23 @@ const onMessage = async (ws, messageBuffer) => {
       clients.forEach((client) => {
         client.ws.send(JSON.stringify(editMessage));
       });
+      break;
+    }
+    case "updateUsername": {
+      const client = clients.find(client => client.ws === ws);
+      if (client) {
+        await updateUsernameInDB(client.user.id, message.newUsername);
+
+        client.user.name = message.newUsername;
+
+        const usersMessage = {
+          type: "users",
+          users: clients.map((client) => client.user),
+        };
+        clients.forEach((client) => {
+          client.ws.send(JSON.stringify(usersMessage));
+        });
+      }
       break;
     }
     default: {

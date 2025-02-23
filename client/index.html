@@ -9,15 +9,15 @@
     <script src="/script.js"></script>
 </head>
 
-<body class="bg-gray-900 text-gray-200 flex items-center justify-center h-screen">
-    <div
+<body id="body" class="bg-gray-900 text-gray-200 flex items-center justify-center h-screen">
+    <div id="chatWindow"
         class="w-full max-w-2xl bg-gray-800 rounded-3xl shadow-2xl p-8 transition-transform transform hover:scale-105 relative">
 
         <!-- Header with User Icon & Logout -->
         <div class="flex justify-between items-center mb-6">
             <!-- User Icon -->
             <div class="flex items-center space-x-3">
-                <img src="" class="w-10 h-10 rounded-full border-2 border-purple-500">
+                <img class="w-10 h-10 rounded-full border-2 border-purple-500">
                 <span id="showuser" class="text-lg font-semibold"></span>
             </div>
 
@@ -41,7 +41,7 @@
 
         <!-- Nachricht senden -->
         <div class="mt-6 flex space-x-2">
-            <input type="text" placeholder="Type a message..."
+            <input id="send" type="text" placeholder="Type a message..."
                 class="w-full p-4 rounded-l-lg bg-gray-600 text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-md focus:shadow-lg transition-shadow duration-300">
             <button id="btnSendHello"
                 class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-4 rounded-r-lg transition-colors duration-300">
@@ -63,6 +63,11 @@
         &#9776;
     </button>
 
+    <!-- Mode Toggle Button -->
+    <button id="modeToggle" class="absolute top-4 right-4 p-3 bg-purple-500 text-white rounded-full transition duration-300 hover:bg-purple-600">
+        🌙
+    </button>
+
     <div id="editMessageModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-gray-800 p-4 rounded-lg shadow-lg w-80">
             <h2 class="text-white text-lg font-bold mb-2">Nachricht bearbeiten</h2>
@@ -80,8 +85,21 @@
             <h2 class="text-white text-lg font-bold mb-2">Nachricht löschen</h2>
             <p class="text-gray-300 mb-4">Möchtest du diese Nachricht wirklich löschen?</p>
             <div class="flex justify-end">
-                <button id="cancelDeleteMessage" class="bg-gray-500 text-white px-3 py-1 rounded mr-2">Abbrechen</button>
+                <button id="cancelDeleteMessage"
+                    class="bg-gray-500 text-white px-3 py-1 rounded mr-2">Abbrechen</button>
                 <button id="confirmDeleteMessage" class="bg-red-500 text-white px-3 py-1 rounded">Löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal zum Bearbeiten des Benutzernamens -->
+    <div id="editUsernameModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg w-80">
+            <h2 class="text-white text-lg font-bold mb-2">Benutzernamen bearbeiten</h2>
+            <input id="editUsernameInput" type="text" class="w-full p-2 rounded text-black bg-gray-300" />
+            <div class="flex justify-end mt-2">
+                <button id="cancelEditUsername" class="bg-gray-500 text-white px-3 py-1 rounded mr-2">Abbrechen</button>
+                <button id="saveEditUsername" class="bg-purple-500 text-white px-3 py-1 rounded">Speichern</button>
             </div>
         </div>
     </div>

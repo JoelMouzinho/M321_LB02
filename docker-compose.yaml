@@ -25,5 +25,16 @@ services:
     ports:
       - 9200:80
 
+  # app:
+  #   image: helltrap/nighttalk:latest
+  #   depends_on:
+  #     - mariadb
+  #   restart: always
+  #   environment:
+  #     - DB_HOST=mariadb
+  #     - SECRET_KEY=J9w!x$7dL@pQz#Vf3YgT&BmN2K*H5R
+  #   ports:
+  #     - 3000:3000
+
 volumes:
   m321_project_mariadb:

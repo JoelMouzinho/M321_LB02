@@ -14,7 +14,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const showUserElement = document.getElementById("showuser");
   if (showUserElement) {
     showUserElement.textContent = username;
+
+    // Event Listener für Klick auf den Benutzernamen, um das Bearbeitungsmodal zu öffnen
+    showUserElement.addEventListener("click", () => {
+      const editUsernameModal = document.getElementById("editUsernameModal");
+      const editUsernameInput = document.getElementById("editUsernameInput");
+      editUsernameInput.value = username; 
+      editUsernameModal.classList.remove("hidden"); 
+    });
   }
+
+  document.getElementById("cancelEditUsername").addEventListener("click", () => {
+    const editUsernameModal = document.getElementById("editUsernameModal");
+    editUsernameModal.classList.add("hidden");
+  });
 
   const socket = new WebSocket("ws://localhost:3000");
 
@@ -29,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const messageBox = document.createElement("div");
     messageBox.classList.add("bg-gray-600", "p-4", "rounded-lg", "shadow-md", "space-y-2", "mb-2");
     messageBox.setAttribute("data-id", msgId);
+    messageBox.setAttribute("id", "message")
 
     const senderInfo = document.createElement("div");
     senderInfo.classList.add("flex", "justify-between", "items-center");
@@ -148,8 +162,8 @@ document.addEventListener("DOMContentLoaded", () => {
         createMessage(msg.id, msg.username, msg.text, msg.timestamp, msg.username === username);
       });
     } else if (message.type === "message") {
-      // Verhindere doppelte Anzeige
-      if (!document.querySelector(`[data-id='${message.id}']`)) {
+      const existingMessage = document.querySelector(`[data-id='${message.id}']`);
+      if (!existingMessage) {
         createMessage(message.id, message.username, message.text, message.timestamp, message.username === username);
       }
     } else if (message.type === "edit") {
@@ -175,14 +189,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const messageText = messageInput.value.trim();
     if (messageText !== "") {
       const newMessage = {
-        id: Date.now(),  // Temporäre ID für sofortige Anzeige
+        id: Date.now(),
         username: username,
         text: messageText,
         timestamp: new Date().toISOString()
       };
-
-      // Nachricht direkt im UI anzeigen
-      createMessage(newMessage.id, newMessage.username, newMessage.text, newMessage.timestamp, true);
 
       // Nachricht an den Server senden
       socket.send(JSON.stringify({
@@ -192,7 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
         timestamp: newMessage.timestamp
       }));
 
-      // Eingabefeld leeren
       messageInput.value = "";
     }
   });
@@ -212,6 +222,31 @@ document.addEventListener("DOMContentLoaded", () => {
   // Sidebar Toggle
   document.getElementById("toggleUsers").addEventListener("click", () => {
     document.getElementById("onlineUsersSidebar").classList.toggle("translate-x-full");
+  });
+
+  document.getElementById('modeToggle').addEventListener('click', () => {
+    const body = document.getElementById('body');
+    const chatWindow = document.getElementById('chatWindow');
+
+    if (body.classList.contains('bg-gray-900')) {
+      body.classList.replace('bg-gray-900', 'bg-white');
+      body.classList.replace('text-gray-200', 'text-black');
+      document.getElementById('messages').classList.replace('bg-gray-700', 'bg-gray-200');
+      document.getElementById('send').classList.replace('bg-gray-600', 'bg-gray-100');
+      document.getElementById('message').classList.replace('bg-gray-600', 'bg-gray-100');
+      chatWindow.classList.replace('bg-gray-800', 'bg-white');
+      chatWindow.classList.replace('text-gray-200', 'text-black');
+      document.getElementById('modeToggle').textContent = '🌞';
+    } else {
+      body.classList.replace('bg-white', 'bg-gray-900');
+      body.classList.replace('text-black', 'text-gray-200');
+      document.getElementById('messages').classList.replace('bg-gray-200', 'bg-gray-700');
+      document.getElementById('send').classList.replace('bg-gray-100', 'bg-gray-600');
+      document.getElementById('message').classList.replace('bg-gray-100', 'bg-gray-600');
+      chatWindow.classList.replace('bg-white', 'bg-gray-800');
+      chatWindow.classList.replace('text-black', 'text-gray-200');
+      document.getElementById('modeToggle').textContent = '🌙';
+    }
   });
 
   // Online-User aktualisieren

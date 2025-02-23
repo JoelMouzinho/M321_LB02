@@ -1,17 +1,14 @@
-# Use the official Node.js image as the base image
+# Verwende ein offizielles Node.js-Image als Basis
 FROM node:22
 
-# Set the working directory inside the container
-WORKDIR ...
+# Setze das Arbeitsverzeichnis
+WORKDIR /usr/app
 
-# Copy the package.json and package-lock.json files to the container
-COPY ...
+# Kopiere die package.json und package-lock.json (falls vorhanden)
+COPY ./ /usr/app/
 
-# Install the dependencies
-RUN ...
+# Installiere die Abhängigkeiten
+RUN npm install
 
-# Copy the source code to the container
-COPY ...
-
-# Start the server when the container starts
-CMD ...
+# Definiere den Befehl zum Starten der Anwendung
+CMD ["npm", "run", "prod"]
