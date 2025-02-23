@@ -54,13 +54,24 @@ document.addEventListener("DOMContentLoaded", () => {
     messageBox.appendChild(senderInfo);
     messageBox.appendChild(messageContent);
 
-    // Bearbeiten-Button nur für eigene Nachrichten
+    // Bearbeiten- und Löschen-Buttons nur für eigene Nachrichten
     if (isOwnMessage) {
+      const buttonContainer = document.createElement("div");
+      buttonContainer.classList.add("flex", "gap-2", "mt-2");
+
       const editButton = document.createElement("button");
       editButton.textContent = "Bearbeiten";
-      editButton.classList.add("bg-blue-500", "text-white", "px-2", "py-1", "rounded", "mt-2");
-      editButton.addEventListener("click", () => editMessage(msgId, messageContent));
-      messageBox.appendChild(editButton);
+      editButton.classList.add("bg-purple-500", "text-white", "px-2", "py-1", "rounded");
+      editButton.addEventListener("click", () => openEditModal(msgId, messageContent));
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "Löschen";
+      deleteButton.classList.add("bg-red-500", "text-white", "px-2", "py-1", "rounded");
+      deleteButton.addEventListener("click", () => openDeleteModal(msgId, messageBox));
+
+      buttonContainer.appendChild(editButton);
+      buttonContainer.appendChild(deleteButton);
+      messageBox.appendChild(buttonContainer);
     }
 
     const messagesContainer = document.getElementById("messages");
@@ -68,22 +79,65 @@ document.addEventListener("DOMContentLoaded", () => {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   };
 
-  // Nachricht bearbeiten
-  const editMessage = (msgId, messageElement) => {
-    const oldText = messageElement.textContent;
-    const newText = prompt("Bearbeite deine Nachricht:", oldText);
+  // MODALS: Nachricht bearbeiten
+  const editModal = document.getElementById("editMessageModal");
+  const editInput = document.getElementById("editMessageInput");
+  const saveEditButton = document.getElementById("saveEditMessage");
+  const cancelEditButton = document.getElementById("cancelEditMessage");
 
-    if (newText && newText.trim() !== "" && newText !== oldText) {
+  let currentMessageId = null;
+  let currentMessageElement = null;
+
+  const openEditModal = (msgId, messageContent) => {
+    editModal.classList.remove("hidden");
+    editInput.value = messageContent.textContent;
+    currentMessageId = msgId;
+    currentMessageElement = messageContent;
+  };
+
+  saveEditButton.onclick = () => {
+    if (editInput.value.trim() !== "") {
       socket.send(JSON.stringify({
         type: "edit",
-        messageId: msgId,
-        newText: newText
+        messageId: currentMessageId,
+        newText: editInput.value.trim()
       }));
-
-      // UI direkt aktualisieren
-      messageElement.textContent = newText;
+      currentMessageElement.textContent = editInput.value.trim();
+      editModal.classList.add("hidden");
     }
   };
+
+  cancelEditButton.onclick = () => editModal.classList.add("hidden");
+
+  // MODALS: Nachricht löschen
+  const deleteModal = document.getElementById("deleteMessageModal");
+  const confirmDeleteButton = document.getElementById("confirmDeleteMessage");
+  const cancelDeleteButton = document.getElementById("cancelDeleteMessage");
+
+  const openDeleteModal = (msgId, messageBox) => {
+    deleteModal.classList.remove("hidden");
+    currentMessageId = msgId;
+    currentMessageElement = messageBox;
+  };
+
+  confirmDeleteButton.onclick = () => {
+    socket.send(JSON.stringify({
+      type: "delete",
+      messageId: currentMessageId
+    }));
+    currentMessageElement.remove();
+    deleteModal.classList.add("hidden");
+  };
+
+  cancelDeleteButton.onclick = () => deleteModal.classList.add("hidden");
+
+  // Escape-Taste schließt Modals
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      editModal.classList.add("hidden");
+      deleteModal.classList.add("hidden");
+    }
+  });
 
   // Nachrichten vom Server empfangen
   socket.addEventListener("message", (event) => {
@@ -94,33 +148,51 @@ document.addEventListener("DOMContentLoaded", () => {
         createMessage(msg.id, msg.username, msg.text, msg.timestamp, msg.username === username);
       });
     } else if (message.type === "message") {
-      createMessage(message.id, message.username, message.text, message.timestamp, message.username === username);
+      // Verhindere doppelte Anzeige
+      if (!document.querySelector(`[data-id='${message.id}']`)) {
+        createMessage(message.id, message.username, message.text, message.timestamp, message.username === username);
+      }
     } else if (message.type === "edit") {
       const messageBox = document.querySelector(`[data-id='${message.messageId}'] p`);
       if (messageBox) {
         messageBox.textContent = message.newText;
       }
+    } else if (message.type === "delete") {
+      const messageBox = document.querySelector(`[data-id='${message.messageId}']`);
+      if (messageBox) {
+        messageBox.remove();
+      }
+    } else if (message.type === "users") {
+      updateOnlineUsers(message.users);
     }
   });
-
-  // Fehlerbehandlung für WebSocket
-  socket.addEventListener("close", () => console.log("WebSocket closed."));
-  socket.addEventListener("error", (event) => console.error("WebSocket error:", event));
 
   // Nachricht senden
   const sendButton = document.getElementById("btnSendHello");
   const messageInput = document.querySelector("input[type='text']");
-  const logoutButton = document.getElementById("btnLogout");
 
   sendButton.addEventListener("click", () => {
     const messageText = messageInput.value.trim();
     if (messageText !== "") {
+      const newMessage = {
+        id: Date.now(),  // Temporäre ID für sofortige Anzeige
+        username: username,
+        text: messageText,
+        timestamp: new Date().toISOString()
+      };
+
+      // Nachricht direkt im UI anzeigen
+      createMessage(newMessage.id, newMessage.username, newMessage.text, newMessage.timestamp, true);
+
+      // Nachricht an den Server senden
       socket.send(JSON.stringify({
         type: "message",
         text: messageText,
         username: username,
-        timestamp: new Date().toISOString()
+        timestamp: newMessage.timestamp
       }));
+
+      // Eingabefeld leeren
       messageInput.value = "";
     }
   });
@@ -131,26 +203,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Logout-Funktion
-  logoutButton.addEventListener("click", () => {
+  // Logout
+  document.getElementById("btnLogout").addEventListener("click", () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
   });
 
-  document.getElementById("toggleUsers").addEventListener("click", function () {
-    const sidebar = document.getElementById("onlineUsersSidebar");
-    if (sidebar.classList.contains("translate-x-full")) {
-      sidebar.classList.remove("translate-x-full");
-    } else {
-      sidebar.classList.add("translate-x-full");
-    }
+  // Sidebar Toggle
+  document.getElementById("toggleUsers").addEventListener("click", () => {
+    document.getElementById("onlineUsersSidebar").classList.toggle("translate-x-full");
   });
 
-  // Funktion zur Aktualisierung der Online-User-Liste
+  // Online-User aktualisieren
   const updateOnlineUsers = (users) => {
     const usersContainer = document.getElementById("onlineUsersList");
-    usersContainer.innerHTML = ""; // Liste leeren
-
+    usersContainer.innerHTML = "";
     users.forEach(user => {
       const userElement = document.createElement("div");
       userElement.classList.add("p-2", "text-white", "border-b", "border-gray-600");
@@ -158,13 +225,4 @@ document.addEventListener("DOMContentLoaded", () => {
       usersContainer.appendChild(userElement);
     });
   };
-
-  // WebSocket-Nachricht für Online-User empfangen
-  socket.addEventListener("message", (event) => {
-    const message = JSON.parse(event.data);
-
-    if (message.type === "users") {
-      updateOnlineUsers(message.users);
-    }
-  });
 });
