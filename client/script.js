@@ -140,9 +140,31 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("toggleUsers").addEventListener("click", function () {
     const sidebar = document.getElementById("onlineUsersSidebar");
     if (sidebar.classList.contains("translate-x-full")) {
-        sidebar.classList.remove("translate-x-full");
+      sidebar.classList.remove("translate-x-full");
     } else {
-        sidebar.classList.add("translate-x-full");
+      sidebar.classList.add("translate-x-full");
     }
-});
+  });
+
+  // Funktion zur Aktualisierung der Online-User-Liste
+  const updateOnlineUsers = (users) => {
+    const usersContainer = document.getElementById("onlineUsersList");
+    usersContainer.innerHTML = ""; // Liste leeren
+
+    users.forEach(user => {
+      const userElement = document.createElement("div");
+      userElement.classList.add("p-2", "text-white", "border-b", "border-gray-600");
+      userElement.textContent = user.name;
+      usersContainer.appendChild(userElement);
+    });
+  };
+
+  // WebSocket-Nachricht für Online-User empfangen
+  socket.addEventListener("message", (event) => {
+    const message = JSON.parse(event.data);
+
+    if (message.type === "users") {
+      updateOnlineUsers(message.users);
+    }
+  });
 });
